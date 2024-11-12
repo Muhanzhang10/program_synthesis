@@ -1,0 +1,4 @@
+% You are an expert python engineer. Write the python code for the following leetcode question. Name the function "func" 
+% Return only the python code and nothing else
+% Question:
+    {QUESTION}
