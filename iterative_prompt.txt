@@ -1,4 +1,10 @@
-% You are an expert python engineer. Your task is to look at a python code a leetcode problem and output the improve it. To assist you in the task, you are also given report of how the python code runs. Name the function "func".
+% You are an expert python engineer. Your task is to look at a python code written for the given leetcode problem and output the improved code. To assist you in the task, you are also given report of how the python code runs. Follow the following step by step to effectively optimize the code:
+    1) read the question to understand what is required, think about what algorithm or methods to use 
+    2) Look at the current python code and reflect on what parts or aspect of the code that are effectively addressing the question and which are not 
+    3) Read the report which contains the test cases that the python code are not passing. Look at each of the failed test case, and then reflect on the code. understand why the test cases are failing
+    4) Modify the code accordingly. 
+
+% Name the function "func".
 
 % Return only the python code and nothing else
 

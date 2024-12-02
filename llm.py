@@ -13,7 +13,7 @@ class Code(BaseModel):
 
 class LLM:
     def __init__(self, model="mixtral-8x7b-32768"):
-        self.groq_client = ChatGroq(model=model, temperature=0)
+        self.groq_client = ChatGroq(model=model, temperature=0.2)
         self.openai_client = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
 
     def run(self, content, structure):

@@ -1,15 +1,16 @@
 import os 
 import json
 import importlib
+import numpy as np 
 
 
 def generate_error_message(incorrect, error, pass_rate):
-    incorrect = incorrect[:5]
+    incorrect = incorrect[:1]
     incorrect_cases = "\n".join([f"""Input: {str(datum['input'])}
                                  Correct answer: {str(datum['output'])}
                                  Your answer: {str(ans)}""" for ans, datum in incorrect])
     
-    error = error[:5]
+    error = error[:1]
     error_cases = "\n".join([f"""Input: {str(datum["input"])}
                              Correct answer: {str(datum['output'])}
                              Your run time error message {err}""" for err, datum in error])
@@ -43,19 +44,22 @@ def run_file(question, file_name):
     
     incorrect = []
     error = []
-    for datum in data:
+    log = np.zeros((5))
+    for i, datum in enumerate(data):
         try:
             ans = module.func(*datum["input"])
         except Exception as err:
             error.append((err, datum))
             continue   
-
         if not test_func(datum, ans):
             incorrect.append((ans, datum))
+            continue 
+        log[i//10] += 1/10    
+            
     pass_rate = 1 - (len(incorrect) + len(error)) / len(data)
     message = generate_error_message(incorrect, error, pass_rate)
     
-    return message, pass_rate
+    return message, pass_rate, log
 
 
 if __name__ == "__main__":
