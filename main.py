@@ -83,8 +83,8 @@ def generate_iteration(question_title, model, iteration=10):
 
 
 
-def generate_iteration_best_fit(question_title, model, iteration=10):
-    output_file = model + "_iterative" 
+def generate_best_fit(question_title, model, iteration=10):
+    output_file = model + "_bestfit" 
     with open(os.path.join(question_title, "question.txt"), "r") as f:
         question = f.read()
     with open("baseline_prompt.txt", "r") as f:
@@ -129,7 +129,6 @@ def generate_iteration_best_fit(question_title, model, iteration=10):
     with open(f"{question_title}/script/{output_file}_final.py", "w") as f:
         f.write(best[1])
     
-    
     logs = logs.tolist()
     
     with open(f"{question_title}/experiment2.json", "r") as f:
@@ -139,29 +138,136 @@ def generate_iteration_best_fit(question_title, model, iteration=10):
     
     with open(f"{question_title}/experiment2.json", "w") as f:
         json.dump(d, f, indent=4)
-
-    
         
-#     return logs.tolist()
-
-
-# def generate_iterations(question_title, model, iteration=10):
-#     logs = []
-#     for i in range(iteration):
-#         log = generate_iteration(question_title, model, 10)
-#         logs.append(log)
+        
+        
+def generate_rex(question_title, model, iteration=10, C=10):
+    output_file = model + "_rex" 
+    with open(os.path.join(question_title, "question.txt"), "r") as f:
+        question = f.read()
+    with open("baseline_prompt.txt", "r") as f:
+        baseline_prompt = f.read()
+    with open("iterative_prompt.txt", "r") as f:
+        iterative_prompt = f.read()
     
-#     logger.success("Experiment done")
-#     with open(f"{question_title}/logs.json", "w") as f:
-#         json.dump(logs, f, indent=4)
+    prompt = baseline_prompt.replace("{QUESTION}", question)
+    llm = LLM(model)
+    code = llm.run(prompt, Code).code
+    
+    with open(f"{question_title}/script/{output_file}_0.py", "w") as f:
+        f.write(code)
+    
+    logs = np.zeros((5, iteration))
+    message, pass_rate, log = run_file(question_title, f"{output_file}_0")
+    logger.info(f"Pass rate is {pass_rate} for iteration 0")
+    logs[:, 0] = log
+    cache = [[message, code, pass_rate, 0]]
+    
+    
+    for i in range(1, iteration):
+        curr, index = max([(value, idx) for idx, value in enumerate(cache)], key=lambda p: np.random.beta(
+            1 + C * p[0][2],
+            1 + C * (1-p[0][2])+p[0][3] 
+            ))
+        cache[index][-1] += 1
+        prompt = iterative_prompt.replace("{REPORT}", curr[0])
+        prompt = prompt.replace("{QUESTION}", question)
+        prompt = prompt.replace("{PYTHON_CODE}", curr[1])
+        code = llm.run(prompt, Code).code
+        
+        with open(f"{question_title}/script/{output_file}_{i}.py", "w") as f:
+            f.write(code)
+            
+        message, pass_rate, log = run_file(question_title, f"{output_file}_{str(i)}")
+        logs[:, i] = log
+        logger.info(f"Pass rate is {pass_rate} for iteration {str(i)}")
 
+        cache.append([message, code, pass_rate, 0])
+        time.sleep(5)
+            
+
+    with open(f"{question_title}/script/{output_file}_rex_final.py", "w") as f:
+        f.write(max(cache, key=lambda x: x[2])[1])
+    
+    logs = logs.tolist()
+    
+    with open(f"{question_title}/experiment3.json", "r") as f:
+        d = json.load(f)
+    
+    d.append(logs)
+    
+    with open(f"{question_title}/experiment3.json", "w") as f:
+        json.dump(d, f, indent=4)
+        
+        
+        
+def generate_best(question_title, model, iteration=10):
+    output_file = model + "_rex" 
+    with open(os.path.join(question_title, "question.txt"), "r") as f:
+        question = f.read()
+    with open("baseline_prompt.txt", "r") as f:
+        baseline_prompt = f.read()
+    with open("iterative_prompt.txt", "r") as f:
+        iterative_prompt = f.read()
+    
+    prompt = baseline_prompt.replace("{QUESTION}", question)
+    llm = LLM(model)
+    code = llm.run(prompt, Code).code
+    
+    with open(f"{question_title}/script/{output_file}_0.py", "w") as f:
+        f.write(code)
+    
+    logs = np.zeros((5, iteration))
+    message, pass_rate, log = run_file(question_title, f"{output_file}_0")
+    logger.info(f"Pass rate is {pass_rate} for iteration 0")
+    logs[:, 0] = log
+    cache = [[message, code, pass_rate, 0]]
+    
+    
+    for i in range(1, iteration):
+        curr, index = max([(value, idx) for idx, value in enumerate(cache)], key=lambda p: p[0][2])
+        cache[index][-1] += 1
+        prompt = iterative_prompt.replace("{REPORT}", curr[0])
+        prompt = prompt.replace("{QUESTION}", question)
+        prompt = prompt.replace("{PYTHON_CODE}", curr[1])
+        code = llm.run(prompt, Code).code
+        
+        with open(f"{question_title}/script/{output_file}_{i}.py", "w") as f:
+            f.write(code)
+            
+        message, pass_rate, log = run_file(question_title, f"{output_file}_{str(i)}")
+        logs[:, i] = log
+        logger.info(f"Pass rate is {pass_rate} for iteration {str(i)}")
+
+        cache.append([message, code, pass_rate, 0])
+        time.sleep(5)
+            
+
+    with open(f"{question_title}/script/{output_file}_rex_final.py", "w") as f:
+        f.write(max(cache, key=lambda x: x[2])[1])
+    
+    logs = logs.tolist()
+    
+    with open(f"{question_title}/experiment3.json", "r") as f:
+        d = json.load(f)
+    
+    d.append(logs)
+    
+    with open(f"{question_title}/experiment3.json", "w") as f:
+        json.dump(d, f, indent=4)
+
+    
+
+    
 
 if __name__ == "__main__":
     question = "textJustification"
     model_name = "llama3-8b-8192"
 
     # generate_baseline(question, model_name)
-    # generate_iteration(question, model_name)
-   
+    generate_iteration(question, model_name)
 
-    generate_iteration_best_fit(question, model_name)
+    # generate_rex(question, model_name, iteration=10, C=10)
+    
+    # generate_best(question, model_name)
+

@@ -1,30 +1,26 @@
 def func(words, maxWidth):
-    result = []
-    curr_line = []
-    curr_line_len = 0
+    res = []
+    curLine = []
+    curWidth = 0
     for word in words:
-        if curr_line_len + len(word) + len(curr_line) > maxWidth:
-            if len(curr_line) == 1:
-                result.append(curr_line[0] + ' ' * (maxWidth - len(curr_line[0])))
+        if curWidth + len(word) + len(curLine) > maxWidth:
+            if len(curLine) == 1:
+                res.append(curLine[0].rjust(maxWidth))
             else:
-                num_spaces = maxWidth - curr_line_len
-                space_between_words = num_spaces // (len(curr_line) - 1)
-                extra_spaces = num_spaces % (len(curr_line) - 1)
-                line = ''
-                for i, w in enumerate(curr_line):
-                    line += w
-                    if i < len(curr_line) - 1:
-                        line += ' ' * (space_between_words + (1 if i < extra_spaces else 0))
-                result.append(line)
-            curr_line = [word]
-            curr_line_len = len(word)
+                numSpaces = maxWidth - curWidth
+                extraSpaces = ' ' * (numSpaces // (len(curLine) - 1))
+                res.append(extraSpaces.join(curLine).ljust(maxWidth))
+            curLine = []
+            curWidth = 0
+        curLine.append(word)
+        curWidth += len(word)
+    if curLine:
+        if len(curLine) == 1:
+            res.append(curLine[0].rjust(maxWidth))
         else:
-            curr_line.append(word)
-            curr_line_len += len(word)
-    if curr_line:
-        if len(curr_line) == 1:
-            result.append(curr_line[0])
-        else:
-            line = ' '.join(curr_line)
-            result.append(line.ljust(maxWidth))
-    return result
+            numSpaces = maxWidth - curWidth
+            extraSpaces = ' ' * (numSpaces // (len(curLine) - 1))
+            res.append(extraSpaces.join(curLine).ljust(maxWidth))
+            if numSpaces % (len(curLine) - 1) != 0:
+                res[-1] += ' '
+    return res
